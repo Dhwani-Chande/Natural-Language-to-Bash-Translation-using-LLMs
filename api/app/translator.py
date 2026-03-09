@@ -21,9 +21,7 @@ class BashTranslator:
         try:
             self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
             self.model = AutoModelForCausalLM.from_pretrained(
-                self.model_name,
-                torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
-                device_map="auto" if torch.cuda.is_available() else None,
+                self.model_name
             )
             self.model.eval()
             self._ready = True
@@ -59,7 +57,10 @@ class BashTranslator:
             )
 
         decoded = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
-        bash_command = decoded.split("### Bash Command:")[-1].strip().split("\n")[0]
+        raw = decoded.split("### Bash Command:")[-1].strip()
+        # Strip markdown code fences if present
+        raw = raw.replace("```bash", "").replace("```", "").strip()
+        bash_command = raw.split("\n")[0].strip()
         confidence = self._compute_confidence(outputs, inputs)
 
         return {
