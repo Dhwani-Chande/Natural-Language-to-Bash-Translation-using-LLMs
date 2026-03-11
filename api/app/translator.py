@@ -5,8 +5,7 @@ import os
 
 # Swap model name to whichever fine-tuned checkpoint you have locally or on HuggingFace Hub
 # e.g. "your-hf-username/nl-to-bash-qwen" or a local path like "./checkpoints/qwen-finetuned"
-DEFAULT_MODEL = os.getenv("MODEL_NAME", "Qwen/Qwen2.5-Coder-0.5B")
-
+DEFAULT_MODEL = os.getenv("MODEL_NAME", "dhwanichande29/nl-to-bash")
 
 class BashTranslator:
     def __init__(self, model_name: str = DEFAULT_MODEL):
