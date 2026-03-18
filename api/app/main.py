@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from app.models import TranslateRequest, TranslateResponse, BatchRequest, BatchResponse, HealthResponse
 from app.translator import BashTranslator
 from app.logger import log_request
@@ -20,6 +20,12 @@ app.add_middleware(
 )
 
 translator = BashTranslator()
+
+# ✅ NEW: Redirect root to API docs
+@app.get("/", include_in_schema=False)
+def root():
+    """Redirect root to API docs."""
+    return RedirectResponse(url="/docs")
 
 
 @app.middleware("http")
