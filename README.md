@@ -2,6 +2,12 @@
 
 Fine-tuned **Llama-3.2-1B** and **Qwen2.5-Coder-0.5B** on 40K natural language → Bash command pairs. Includes an evaluation suite using exact match and semantic similarity, plus a FastAPI deployment.
 
+[![Model on HuggingFace](https://img.shields.io/badge/🤗%20Model-HuggingFace-yellow)](https://huggingface.co/dhwanichande29/nl-to-bash)
+[![Live API](https://img.shields.io/badge/🔗%20API-Live-green)](https://dhwanichande29-nl-to-bash.hf.space/docs)
+[![Live Demo](https://img.shields.io/badge/🚀%20Demo-Gradio%20Space-blue)](https://huggingface.co/spaces/dhwanichande29/nl-to-bash)
+
+> 💤 Note: The API may take ~30 seconds to wake up on first visit due to inactivity sleep. Once running, expect ~10s latency on free CPU hardware.
+
 ---
 
 ## Models
@@ -73,9 +79,13 @@ curl -X POST http://localhost:8000/translate \
 ### Expected Response
 ```json
 {
-  "command": "find . -type f"
+  "instruction": "list all files in current directory",
+  "bash_command": "ls -l",
+  "confidence": 0.9,
+  "latency_ms": 10754.27
 }
 ```
+> ⚠️ Latency is ~10s on free CPU hardware. For faster inference, run locally with a GPU.
 
 ---
 
