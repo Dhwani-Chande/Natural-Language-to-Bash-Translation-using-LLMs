@@ -1,6 +1,6 @@
 # Natural Language to Bash Translation using LLMs
 
-Fine-tuned **Llama-3.2-1B** and **Qwen2.5-Coder-0.5B** on 40K natural language → Bash command pairs. Includes an evaluation suite using exact match and semantic similarity, plus a FastAPI deployment.
+Fine-tuned **Llama-3.2-1B** and **Qwen2.5-Coder-0.5B** on 40K natural language → Bash command pairs. Includes a comprehensive evaluation suite benchmarking 8 heuristics, plus a FastAPI deployment.
 
 [![Model on HuggingFace](https://img.shields.io/badge/🤗%20Model-HuggingFace-yellow)](https://huggingface.co/dhwanichande29/nl-to-bash)
 [![Live API](https://img.shields.io/badge/🔗%20API-Live-green)](https://dhwanichande29-nl-to-bash.hf.space/docs)
@@ -32,24 +32,51 @@ Both models were fully fine-tuned (no LoRA) on an NVIDIA A100-SXM4-80GB in ~2.09
 
 ## Results
 
+### Model Comparison
+
 | Model | Exact Match | Semantic Match (≥0.8) | Avg Similarity |
 |---|---|---|---|
 | Llama-3.2-1B | 11.00% | 57.00% | 0.766 |
 | Qwen2.5-Coder-0.5B | **13.67%** | **60.33%** | **0.776** |
 
 > Qwen2.5-Coder-0.5B outperforms Llama-3.2-1B on all metrics despite being less than half the size.
-> Semantic similarity (via `all-MiniLM-L6-v2`) is a better indicator of real-world quality than exact match alone, since multiple Bash commands can be functionally equivalent.
+
+---
+
+### Evaluation Across 8 Heuristics (Qwen2.5-Coder-0.5B)
+
+| Heuristic | Precision | Recall | F1 | Accuracy |
+|---|---|---|---|---|
+| BLEU | 0.99 | 0.39 | 0.56 | 0.69 |
+| NL2CMD | 0.98 | 0.20 | 0.33 | 0.60 |
+| TF-IDF | 0.99 | 0.46 | 0.63 | 0.73 |
+| Exec TF-IDF | 0.99 | 0.65 | 0.78 | 0.82 |
+| MxBai Embed | 0.83 | 0.82 | 0.82 | 0.82 |
+| **Exec MxBai Embed** | **0.96** | **0.83** | **0.89** | **0.90** |
+| Llama3 Judge | 0.49 | 0.78 | 0.60 | 0.48 |
+| Exec Llama3 Judge | 0.61 | 0.91 | 0.73 | 0.67 |
+
+> Execution-aware metrics (`exec_*`) consistently outperform their text-match counterparts.
+> `exec_mxbai_embed` achieves the best overall performance — **90% accuracy and 0.89 F1** — by accounting for functionally equivalent Bash commands rather than requiring character-perfect matches.
 
 ---
 
 ## Project Structure
 
 ```
-├── finetune.ipynb          # Fine-tuning pipeline for both models
-├── feh_comparison.ipynb    # Evaluation and model comparison
-├── example.ipynb           # Example usage and inference
-├── api/                    # FastAPI deployment
-└── .github/workflows/      # CI/CD
+├── notebooks/
+│   ├── finetune.ipynb          # Fine-tuning pipeline with outputs
+│   ├── feh_comparison.ipynb    # 8-heuristic evaluation and comparison
+│   └── example.ipynb           # Example usage and inference
+├── training/
+│   ├── config.py               # Hyperparameters and model config
+│   ├── dataset.py              # Data loading and preprocessing
+│   ├── finetune.py             # Training script (CLI)
+│   └── evaluate.py             # Evaluation script (CLI)
+├── api/                        # FastAPI deployment
+├── .github/workflows/          # CI/CD
+├── Dockerfile                  # Local deployment
+└── requirements.txt
 ```
 
 ---
@@ -121,8 +148,18 @@ uvicorn
 
 ## Evaluation
 
-- **Exact Match** — character-perfect accuracy against ground truth
-- **Semantic Match** — cosine similarity ≥ 0.8 using `all-MiniLM-L6-v2` embeddings
+| Heuristic | Description |
+|---|---|
+| BLEU | N-gram overlap with reference command |
+| NL2CMD | Command structure similarity |
+| TF-IDF | Token frequency-based similarity |
+| Exec TF-IDF | TF-IDF applied to command execution output |
+| MxBai Embed | Semantic similarity via `mxbai-embed-large` embeddings |
+| **Exec MxBai Embed** | Embedding similarity on execution output *(best overall)* |
+| Llama3 Judge | LLM-as-judge correctness scoring |
+| Exec Llama3 Judge | LLM judge applied to execution output |
+
+Execution-aware variants (`exec_*`) evaluate whether commands produce the **same output** rather than whether they look the same — a critical distinction since `ls` and `find . -type f` are functionally equivalent.
 
 ---
 
