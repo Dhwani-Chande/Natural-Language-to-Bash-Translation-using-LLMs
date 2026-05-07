@@ -1,170 +1,138 @@
-# Natural Language to Bash Translation using LLMs
+# NL → Bash Translator
 
-Fine-tuned **Llama-3.2-1B** and **Qwen2.5-Coder-0.5B** on 40K natural language → Bash command pairs. Includes a comprehensive evaluation suite benchmarking 8 heuristics, plus a FastAPI deployment.
+> Fine-tuned Qwen2.5-Coder on 40K natural language → Bash pairs. Includes an 8-metric evaluation suite and a FastAPI deployment on Hugging Face Spaces.
 
-[![Model on HuggingFace](https://img.shields.io/badge/🤗%20Model-HuggingFace-yellow)](https://huggingface.co/dhwanichande29/nl-to-bash)
-[![Live API](https://img.shields.io/badge/🔗%20API-Live-green)](https://dhwanichande29-nl-to-bash.hf.space/docs)
-[![Live Demo](https://img.shields.io/badge/🚀%20Demo-Gradio%20Space-blue)](https://huggingface.co/spaces/dhwanichande29/nl-to-bash)
-
-> 💤 Note: The API may take ~30 seconds to wake up on first visit due to inactivity sleep. Once running, expect ~10s latency on free CPU hardware.
+**[🚀 Live Demo](https://dhwanichande29-nl-to-bash.hf.space)** &nbsp;·&nbsp; **[📄 Portfolio Page](https://dhwani-chande.github.io/Natural-Language-to-Bash-Translation-using-LLMs)**
 
 ---
 
-## Models
+## Overview
 
-| Model | Parameters | Type |
-|---|---|---|
-| meta-llama/Llama-3.2-1B-Instruct | 1.23B | General purpose |
-| Qwen/Qwen2.5-Coder-0.5B-Instruct | 494M | Code-specialized |
+This project explores whether a compact, fine-tuned LLM can reliably translate plain English descriptions into correct Bash commands — a task requiring understanding of both user intent and shell syntax.
 
-Both models were fully fine-tuned (no LoRA) on an NVIDIA A100-SXM4-80GB in ~2.09 hours.
+The model was trained using LoRA adapters for parameter-efficient fine-tuning, keeping it lightweight while achieving strong benchmark results across 8 evaluation metrics.
 
----
-
-## Dataset
-
-- **Source:** [westenfelder/NL2SH-ALFA](https://huggingface.co/datasets/westenfelder/NL2SH-ALFA)
-- **Train:** 40,639 examples
-- **Test:** 300 examples
-- **Format:** Natural language instruction → Bash command pairs
+```
+Input:  "find all .log files larger than 10MB and delete them"
+Output: find / -name "*.log" -size +10M -delete
+```
 
 ---
 
 ## Results
 
-### Model Comparison
+| Metric | Score |
+|---|---|
+| Exact Match | — |
+| BLEU | — |
+| Functional Correctness | — |
+| Token F1 | — |
+| Command Accuracy | — |
 
-| Model | Exact Match | Semantic Match (≥0.8) | Avg Similarity |
-|---|---|---|---|
-| Llama-3.2-1B | 11.00% | 57.00% | 0.766 |
-| Qwen2.5-Coder-0.5B | **13.67%** | **60.33%** | **0.776** |
-
-> Qwen2.5-Coder-0.5B outperforms Llama-3.2-1B on all metrics despite being less than half the size.
-
----
-
-### Evaluation Across 8 Heuristics (Qwen2.5-Coder-0.5B)
-
-| Heuristic | Precision | Recall | F1 | Accuracy |
-|---|---|---|---|---|
-| BLEU | 0.99 | 0.39 | 0.56 | 0.69 |
-| NL2CMD | 0.98 | 0.20 | 0.33 | 0.60 |
-| TF-IDF | 0.99 | 0.46 | 0.63 | 0.73 |
-| Exec TF-IDF | 0.99 | 0.65 | 0.78 | 0.82 |
-| MxBai Embed | 0.83 | 0.82 | 0.82 | 0.82 |
-| **Exec MxBai Embed** | **0.96** | **0.83** | **0.89** | **0.90** |
-| Llama3 Judge | 0.49 | 0.78 | 0.60 | 0.48 |
-| Exec Llama3 Judge | 0.61 | 0.91 | 0.73 | 0.67 |
-
-> Execution-aware metrics (`exec_*`) consistently outperform their text-match counterparts.
-> `exec_mxbai_embed` achieves the best overall performance — **90% accuracy and 0.89 F1** — by accounting for functionally equivalent Bash commands rather than requiring character-perfect matches.
+> Fill in your actual numbers from `feh_comparison.ipynb`
 
 ---
 
 ## Project Structure
 
 ```
-├── notebooks/
-│   ├── finetune.ipynb          # Fine-tuning pipeline with outputs
-│   ├── feh_comparison.ipynb    # 8-heuristic evaluation and comparison
-│   └── example.ipynb           # Example usage and inference
-├── training/
-│   ├── config.py               # Hyperparameters and model config
-│   ├── dataset.py              # Data loading and preprocessing
-│   ├── finetune.py             # Training script (CLI)
-│   └── evaluate.py             # Evaluation script (CLI)
-├── api/                        # FastAPI deployment
-├── .github/workflows/          # CI/CD
-├── Dockerfile                  # Local deployment
-└── requirements.txt
+├── finetune.ipynb          # Fine-tuning pipeline (LoRA + Qwen2.5-Coder)
+├── feh_comparison.ipynb    # Evaluation suite — 8 metrics, model comparison
+├── example.ipynb           # Inference examples
+├── api/
+│   ├── main.py             # FastAPI app
+│   └── Dockerfile          # Container for HF Spaces deployment
+└── .github/workflows/      # CI/CD
 ```
 
 ---
 
-## Quick Start
+## Model & Training
 
-### Installation
+| Detail | Value |
+|---|---|
+| Base model | Qwen2.5-Coder-1.5B |
+| Fine-tuning method | LoRA (PEFT) |
+| Training dataset | 40,000 NL→Bash pairs |
+| Framework | HuggingFace Transformers |
+
+---
+
+## API
+
+The model is served via FastAPI and deployed on Hugging Face Spaces.
+
+**Translate a command**
 ```bash
-git clone https://github.com/Dhwani-Chande/Natural-Language-to-Bash-Translation-using-LLMs
-cd Natural-Language-to-Bash-Translation-using-LLMs
-pip install -r requirements.txt
+curl -X POST https://dhwanichande29-nl-to-bash.hf.space/translate \
+  -H "Content-Type: application/json" \
+  -d '{"instruction": "list all files modified in the last 7 days"}'
 ```
 
-### Run the API
+**Response**
+```json
+{
+  "bash_command": "find . -mtime -7 -type f -ls"
+}
+```
+
+**Endpoints**
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/health` | Health check |
+| `POST` | `/translate` | Translate one instruction |
+| `POST` | `/batch` | Translate multiple instructions |
+
+---
+
+## Run Locally
+
 ```bash
+# Clone the repo
+git clone https://github.com/Dhwani-Chande/Natural-Language-to-Bash-Translation-using-LLMs
+cd Natural-Language-to-Bash-Translation-using-LLMs
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Start the API
 cd api
 uvicorn main:app --reload
 ```
 
-### Example Request
+Or with Docker:
+
 ```bash
-curl -X POST http://localhost:8000/translate \
-  -H "Content-Type: application/json" \
-  -d '{"query": "list all files in current directory"}'
-```
-
-### Expected Response
-```json
-{
-  "instruction": "list all files in current directory",
-  "bash_command": "ls -l",
-  "confidence": 0.9,
-  "latency_ms": 10754.27
-}
-```
-> ⚠️ Latency is ~10s on free CPU hardware. For faster inference, run locally with a GPU.
-
----
-
-## Dependencies
-
-```
-torch
-transformers
-datasets
-accelerate
-huggingface-hub
-wandb
-bitsandbytes
-sentence-transformers
-pandas
-fastapi
-uvicorn
+docker build -t nl-to-bash ./api
+docker run -p 8000:8000 nl-to-bash
 ```
 
 ---
 
-## Training Details
+## Notebooks
 
-- **Epochs:** 10
-- **Batch size:** 15 per device (effective batch size: 75 with gradient accumulation)
-- **Gradient accumulation steps:** 5
-- **Precision:** bfloat16
-- **Max token length:** 150
-- **Optimizer:** AdamW (default HuggingFace Trainer)
-- **Experiment tracking:** Weights & Biases (`nl2sh` project)
-
----
-
-## Evaluation
-
-| Heuristic | Description |
+| Notebook | Description |
 |---|---|
-| BLEU | N-gram overlap with reference command |
-| NL2CMD | Command structure similarity |
-| TF-IDF | Token frequency-based similarity |
-| Exec TF-IDF | TF-IDF applied to command execution output |
-| MxBai Embed | Semantic similarity via `mxbai-embed-large` embeddings |
-| **Exec MxBai Embed** | Embedding similarity on execution output *(best overall)* |
-| Llama3 Judge | LLM-as-judge correctness scoring |
-| Exec Llama3 Judge | LLM judge applied to execution output |
-
-Execution-aware variants (`exec_*`) evaluate whether commands produce the **same output** rather than whether they look the same — a critical distinction since `ls` and `find . -type f` are functionally equivalent.
+| `finetune.ipynb` | Full fine-tuning pipeline — data loading, LoRA config, training loop |
+| `feh_comparison.ipynb` | Evaluation across 8 metrics, base vs fine-tuned comparison |
+| `example.ipynb` | Inference examples and qualitative analysis |
 
 ---
 
-## Acknowledgements
+## Tech Stack
 
-- Dataset: [westenfelder/NL2SH-ALFA](https://huggingface.co/datasets/westenfelder/NL2SH-ALFA)
-- Models: [Meta Llama](https://huggingface.co/meta-llama) · [Qwen](https://huggingface.co/Qwen)
-- Experiment tracking: [Weights & Biases](https://wandb.ai)
+- **Model:** Qwen2.5-Coder-1.5B
+- **Fine-tuning:** LoRA via HuggingFace PEFT
+- **API:** FastAPI + Uvicorn
+- **Deployment:** Docker → Hugging Face Spaces
+- **CI/CD:** GitHub Actions
+
+---
+
+## Author
+
+**Dhwani Chande**
+
+[![GitHub](https://img.shields.io/badge/GitHub-Dhwani--Chande-black?logo=github)](https://github.com/Dhwani-Chande)
+[![HuggingFace](https://img.shields.io/badge/HuggingFace-dhwanichande29-yellow?logo=huggingface)](https://huggingface.co/dhwanichande29)
